@@ -30,6 +30,28 @@
 	<script type="text/javascript" src="js/jquery.min.js"></script>
 	<script type="text/javascript" src="js/bootstrap.min.js"></script>
 	<script type="text/javascript" src="js/scripts.js"></script>
+	
+	<script type="text/javascript">
+	$(document).ready(function(){
+		
+		var voted = false;
+		var voteFor = false;
+		
+		$("#yes_button").click(function(){
+			voteFor = true;
+			$("#feedback_title").html("You have already voted for YES.");
+			$("#feedback_text").html("");
+			voted = true;
+		});
+		$("#no_button").click(function(){
+			voteFor = false;
+			$("#feedback_title").html("You have already voted for NO.");
+			$("#feedback_text").html("");
+			vote = true;
+		});
+	});
+	</script>
+	
 </head>
 
 <body>
@@ -37,32 +59,30 @@
 	<div class="row clearfix">
 		<div class="col-md-12 column">
 			<h3 class="text-center">
-				h3. Lorem ipsum dolor sit amet.
+				Meeting Better Maker 3000
 			</h3>
 		</div>
 	</div>
 	<div class="row clearfix">
 		<div class="col-md-12 column">
-			<h6>
-				Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui.
-			</h6>
+			<h4>
+				50% of the attendies have agreed to stop the meeting. What's your option?
+			</h4>
 		</div>
 	</div>
 	<div class="row clearfix">
 		<div class="col-md-12 column">
-			 <button type="button" class="btn btn-block btn-lg btn-danger">Default</button> <button type="button" class="btn btn-block btn-info btn-default">Default</button>
+			 <button type="button" class="btn btn-block btn-lg btn-danger" id="yes_button">Yes, it's helpful</button> 
+			 <button type="button" class="btn btn-block btn-info btn-default" id="no_button">No, it's not helpful at all</button>
 		</div>
 	</div>
 	<div class="row clearfix">
 		<div class="col-md-12 column">
-			<h2>
+			<h5 class="text-center" id="feedback_title">
 				Heading
-			</h2>
-			<p>
-				Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui.
-			</p>
-			<p>
-				<a class="btn" href="#">View details »</a>
+			</h5>
+			<p id="feedback_text">
+				Statistics goes here.
 			</p>
 		</div>
 	</div>
