@@ -1,0 +1,9 @@
+[Unit]
+Description=MBM3000 service
+
+[Service]
+Type=simple
+ExecStart=/home/root/run.sh
+
+[Install]
+WantedBy=default.target
