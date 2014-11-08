@@ -1,26 +1,33 @@
 #!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
-
+from __future__ import unicode_literals
 import time
 import threading
 import random
 import json
+import atexit
 from flask import Flask, jsonify, redirect, request, render_template, g
 from models import Meeting, Person
 from redisco.containers import Hash
-
-app = Flask(__name__)
 
 #from OpenSSL import SSL
 #context = SSL.Context(SSL.SSLv23_METHOD)
 #context.use_privatekey_file('server.key')
         #context.use_certificate_file('server.crt')
 
-VOTING_PERIOD = 30.0
 
+app = Flask(__name__)
+
+# time between votings.
+VOTING_TIME = 5.0
+VOTE_THRESHOLD = 2
 MODEL = 'MODEL'
+timer_thread = threading.Thread()
 
 def get_meeting():
+    """
+    Retrieve a meeting from the database or create one if there isn't one.
+    """
     meetings = Meeting.objects.all()
     if len(meetings) < 1:
         meeting = Meeting(name='Meeting without a name')
@@ -28,22 +35,10 @@ def get_meeting():
         meeting = meetings[0]
     return meeting
 
-def start_vote():
-    print "started voting thread"
-    while True:
-        meeting = get_meeting()
-        time.sleep(VOTING_PERIOD)
-        print("starting vote")
-        # select randomly
-        if len(meeting.people) > 1:
-            selected = random.sample(people, 1)[0]
-            selected['mustvote'] = True
-
 @app.route('/')
 def index():
     meeting = get_meeting()
     people = meeting.people
-    print people
     return render_template('index.html', people=people)
 
 @app.route('/clear')
@@ -83,7 +78,7 @@ def listpeople():
 def flag():
     meeting = get_meeting()
     data = {
-        'flag': meeting.wave_the_flag == True
+        'flag': meeting.wave_the_flag
     }
     return jsonify(data)
 
@@ -99,9 +94,12 @@ def toggleflag():
 
 @app.route('/status/<name>')
 def status(name):
-    meeting = get_meeting()
-    people = meeting.people
-    person = Person.objects.filter(name=name)[0]
+    try:
+        meeting = get_meeting()
+        people = meeting.people
+        person = Person.objects.filter(name=name)[0]
+    except IndexError:
+        return redirect('/')
 
     names = [x.name for x in meeting.people]
     if name not in names:
@@ -111,12 +109,12 @@ def status(name):
     sthwrong = False
     if votes > 1:
         sthwrong = True
-
     if sthwrong:
         meeting.wave_the_flag = True
         meeting.save()
     if person is not None:
-        return render_template('status.html', meeting=meeting, people=meeting.people, name=person.name, mustvote=person.mustvote, sthwrong=sthwrong)
+        return render_template('status.html', meeting=meeting, people=meeting.people,
+            name=person.name, mustvote=person.mustvote, sthwrong=sthwrong)
 
     return render_template('thanks.html')
 
@@ -125,16 +123,70 @@ def vote(name, button):
     meeting = get_meeting()
     person = Person.objects.filter(name=name)[0]
     if person is not None:
+        person.mustvote = False
         if button == "yes":
             person.voted = 0
         elif button == "no":
-            perso.voted = 1
+            person.voted = 1
         person.save()
         return redirect('/status/%s' % name)
 
+def run_vote():
+    """
+    This function is called every x seconds by the background thread.
+    """
+    meeting = get_meeting()
+    people = meeting.people
+    print("run vote")
+    # If the meeting is already gone bad, we don't do anything.
+    if meeting.every_one_must_vote:
+        print("every one must vote")
+        return
+    if not meeting.started:
+        print("meeting not started")
+        return
+
+    total_votes = sum([x.voted for x in people])
+    if total_votes > VOTE_THRESHOLD:
+        meeting.every_one_must_vote = True
+        meeting.save()
+
+    # select randomly
+    selected = None
+    if len(meeting.people) > 1:
+        selected = random.sample(people, 1)[0]
+
+    # People that have voted need not vote again.
+    if selected.voted != 1:
+        selected.mustvote = True
+        selected.save()
+        print('selected {} for voting'.format(selected.name))
+
+def setup_app(debug):
+    """
+    Configure a periodic timer thread.
+    """
+    def interrupt():
+        global timer_thread
+        timer_thread.cancel()
+
+    def run_periodically():
+        global timer_thread
+        run_vote()
+        timer_thread = threading.Timer(VOTING_TIME, run_periodically, ())
+        timer_thread.start()
+
+
+    def start_timer_thread():
+        global timer_thread
+        timer_thread = threading.Timer(VOTING_TIME, run_periodically, ())
+        timer_thread.start()
+
+    start_timer_thread()
+    atexit.register(interrupt)
+    app.config.update(DEBUG=debug)
+
 
 if __name__ == '__main__':
-    app.config.update(DEBUG=True)
-    threading.
-    app.run()
-    # app.run(use_reloader=False, host='0.0.0.0') # ssl_context=context)
+    setup_app(debug=True)
+    app.run(use_reloader=False, host='0.0.0.0') # ssl_context=context)

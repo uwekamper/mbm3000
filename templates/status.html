@@ -34,8 +34,10 @@
 	<script type="text/javascript">
 	$(document).ready(function(){
 
-		var voted = false;
-		var voteFor = false;
+    {% if mustvote %}
+      // Vibrate once for one second
+      navigator.vibrate(1000);
+    {% endif %}
 
     var do_reload = true;
 
@@ -45,18 +47,6 @@
       }
     }, 15000);
 		
-{#		$("#yes_button").click(function(){#}
-{#			voteFor = true;#}
-{#			$.get('vote/'+{{name}}+'/yes',function(data,status) {#}
-{#			},'html');#}
-{#			voted = true;#}
-{#		});#}
-{#		$("#no_button").click(function(){#}
-{#			voteFor = false;#}
-{#			$.get('vote/'+{{name}}+'/no',function(data,status) {#}
-{#			},'html');#}
-{#			voted = true;#}
-{#		});#}
 	});
 	</script>
 	

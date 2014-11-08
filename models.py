@@ -10,4 +10,5 @@ class Meeting(models.Model):
     people = models.ListField(Person)
     started = models.BooleanField(default=False)
     wave_the_flag = models.BooleanField(default=False)
+    every_one_must_vote = models.BooleanField(default=False)
 
