@@ -20,3 +20,5 @@ Install on Edison
 
 Copy everything in this repository's edison/ subdir to the edison. Make .sh-files executable if necessary.
 Copy mbm3000.service to /etc/systemd/system. The run systemctl enable mbm3000.
+
+Connect servo to pin D3.
